@@ -71,8 +71,32 @@ const verifyToken = (req, res, next) => {
     }
 };
 
+const verifyPayloadId = (req, res, next) => {
+    const id = req.params.id
+    console.log("req.params.id: ", req.params.id);
+
+
+    try {
+        const authorizationHeader = req.get("Authorization");
+        if (!authorizationHeader) throw new Error("No authorization header");
+
+        const [type, token] = authorizationHeader.split(' ');
+        if (type !== "Bearer") throw new Error("Authorization header has not the 'Bearer' type");
+
+        if (String(id) !== String(req.payload.sub)) throw new Error("Id doesn't match");
+
+        req.payload = jwt.verify(token, process.env.JWT_SECRET);
+
+        next();
+    } catch (err) {
+        console.error(err);
+        res.status(403).send("Forbidden");
+    }
+}
+
 module.exports = {
     hashPassword,
     verifyPassword,
-    verifyToken
+    verifyToken,
+    verifyPayloadId
 };
